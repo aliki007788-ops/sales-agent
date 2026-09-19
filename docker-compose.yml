@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: asa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: asa
+      POSTGRES_PASSWORD: asa
+      POSTGRES_DB: asa
+    ports:
+      - "5432:5432"
+    volumes:
+      - asa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asa -d asa"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build: .
+    container_name: asa-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "Autonomous Sales Agent"
+      ENVIRONMENT: development
+      SECRET_KEY: "change-me-in-production-use-openssl-rand-hex-32"
+      DATABASE_URL: postgresql+asyncpg://asa:asa@db:5432/asa
+      DB_ECHO: "false"
+      LOG_JSON: "false"
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn sales_agent.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  asa_pgdata:

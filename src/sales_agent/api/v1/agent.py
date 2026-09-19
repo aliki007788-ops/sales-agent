@@ -1,6 +1,6 @@
 # ==========================================
 # src/sales_agent/api/v1/agent.py
-# Version: 2.0 — Phase 5 (DB credentials)
+# Version: 2.1 — Phase 5 (DB credentials) — Fixed 204 response_model issue
 # ==========================================
 from __future__ import annotations
 
@@ -103,6 +103,7 @@ async def list_channels(
 @router.delete(
     "/channels/{channel}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
 )
 async def deactivate_channel(
     channel: str,
